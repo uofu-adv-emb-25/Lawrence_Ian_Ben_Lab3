@@ -10,7 +10,6 @@ log
 .vscode/
 **/build/
 CMakeLists.txt
-**/CMakeFiles/
 **/Makefile
 **/CTestTestfile.cmake
 **/cmake_install.cmake
