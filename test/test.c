@@ -1,14 +1,3 @@
-#include <stdio.h>
-#include <pico/stdlib.h>
-#include <stdint.h>
-#include <unity.h>
-#include "unity_config.h"
-#include <pico/multicore.h>
-#include <pico/cyw43_arch.h>
-#include <semphr.h>
-#include <FreeRTOS.h>
-
-
 #include <unity.h>
 #include "unity_config.h"
 #include <stdint.h>
@@ -55,7 +44,7 @@ int main (void)
     TaskHandle_t main, side;
     semaphore = xSemaphoreCreateCounting(1, 1);
     sleep_ms(5000); // Give time for TTY to attach.
-    TEST_ASSERT_TRUE_MESSAGE(sempahore != NULL, "Semaphore is returned as NULL");
+    TEST_ASSERT_TRUE_MESSAGE(semaphore != NULL, "Semaphore is returned as NULL");
     if (semaphore != NULL){
         printf("Start tests\n");
         UNITY_BEGIN();
