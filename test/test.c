@@ -71,19 +71,60 @@ void test_dead_lock(void){
 
     vTaskDelay(1000);
     TEST_ASSERT_EQUAL_MESSAGE(2, counter, "Counter should only increment to 2.");
-    //TEST_ASSERT_EQUAL_MESSAGE(0, xSemaphoreTake(a_lock, pdMS_TO_TICKS(10)), "a lock was not is use.");
-    //TEST_ASSERT_EQUAL_MESSAGE(0, xSemaphoreTake(b_lock, pdMS_TO_TICKS(10)), "b lock was not in use.");
+    TEST_ASSERT_EQUAL_MESSAGE(0, xSemaphoreTake(a_lock, pdMS_TO_TICKS(10)), "a lock was not is use.");
+    TEST_ASSERT_EQUAL_MESSAGE(0, xSemaphoreTake(b_lock, pdMS_TO_TICKS(10)), "b lock was not in use.");
     
     vTaskDelete(a);
     vTaskDelete(b);
     
 }
-void runner_thread (__unused void* args){
+
+void test_orphaned_lock()
+{
+    SemaphoreHandle_t a_lock = xSemaphoreCreateCounting(1, 1);
+    counter = 0;
+    TaskHandle_t a, b;
+    struct Args taskA_Args = {a_lock, NULL, &counter};
+    struct Args taskB_Args = {a_lock, NULL, &counter};
+
+    xTaskCreate(task_orphaned, "firstThread",
+                    A_TASK_STACK_SIZE, (void*) &taskA_Args, A_TASK_PRIORITY, &a);
+    xTaskCreate(task_orphaned, "secondThread",
+                    B_TASK_STACK_SIZE, (void*) &taskB_Args, B_TASK_PRIORITY, &b);
+    vTaskDelay(1000);
+    TEST_ASSERT_EQUAL_MESSAGE(1, counter, "Counter should only increment to 1.");
+    TEST_ASSERT_EQUAL_MESSAGE(0, xSemaphoreTake(a_lock, pdMS_TO_TICKS(10)), "a lock was not is use.");
+    vTaskDelete(a);
+    vTaskDelete(b);
+
+}
+
+void test_unorphaned_lock()
+{
+    SemaphoreHandle_t a_lock = xSemaphoreCreateCounting(1, 1);
+    counter = 0;
+    TaskHandle_t a, b;
+    struct Args taskA_Args = {a_lock, NULL, &counter};
+    struct Args taskB_Args = {a_lock, NULL, &counter};
+
+    xTaskCreate(task_unorphaned, "firstThread",
+                    A_TASK_STACK_SIZE, (void*) &taskA_Args, A_TASK_PRIORITY, &a);
+    xTaskCreate(task_unorphaned, "secondThread",
+                    B_TASK_STACK_SIZE, (void*) &taskB_Args, B_TASK_PRIORITY, &b);
+    vTaskDelay(1000);
+    TEST_ASSERT_EQUAL_MESSAGE(2, counter, "Counter should only increment to 1.");
+    TEST_ASSERT_EQUAL_MESSAGE(1, xSemaphoreTake(a_lock, pdMS_TO_TICKS(10)), "a lock was is use.");
+    vTaskDelete(a);
+    vTaskDelete(b);
+
+}
+
+void tester_thread (__unused void* args){
     TaskHandle_t main, side;
     sleep_ms(5000); // Give time for TTY to attach.
     TEST_ASSERT_TRUE_MESSAGE(semaphore != NULL, "Semaphore is returned as NULL");
 
-    for (;;){
+    if (semaphore != NULL){
         printf("Start tests\n");
         UNITY_BEGIN();
         RUN_TEST(side_thread);
@@ -92,32 +133,16 @@ void runner_thread (__unused void* args){
         sleep_ms(100);
         RUN_TEST(test_simple_lock);
         sleep_ms(100);
-        
         RUN_TEST(test_dead_lock);
+        sleep_ms(100);
+        RUN_TEST(test_orphaned_lock);
+        sleep_ms(100);
+        RUN_TEST(test_unorphaned_lock);
         UNITY_END();
-        sleep_ms(10000);
     }
-
-
-    // if (semaphore != NULL){
-    //     printf("Start tests\n");
-    //     UNITY_BEGIN();
-    //     RUN_TEST(side_thread);
-    //     sleep_ms(100);
-    //     RUN_TEST(main_thread);
-    //     sleep_ms(100);
-    //     RUN_TEST(test_simple_lock);
-    //     sleep_ms(100);
-        
-    //     RUN_TEST(test_dead_lock);
-    //     UNITY_END();
+    while(1) {sleep_ms(5000);}
     
-    //     while(1) {sleep_ms(5000);}
-    //     return UNITY_END();
-    // }
 }
-
-
 
 
 int main (void)
@@ -127,7 +152,7 @@ int main (void)
     on = false;
     counter = 0;
     semaphore = xSemaphoreCreateCounting(1, 1);
-    xTaskCreate(runner_thread, "TestRunner",
+    xTaskCreate(tester_thread, "testerThread",
                 configMINIMAL_STACK_SIZE, NULL, TEST_RUNNER_PRIORITY, NULL);
     vTaskStartScheduler();
 

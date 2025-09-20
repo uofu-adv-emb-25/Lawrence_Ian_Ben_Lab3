@@ -48,3 +48,23 @@ void taskB(void * params){
     xSemaphoreGive(task_B_args->b_lock);
     vTaskSuspend(NULL);
 }
+
+void task_orphaned(void * params){
+    struct Args * task_orphaned_args = (struct Args *) params;
+    if (xSemaphoreTake(task_orphaned_args->a_lock, portMAX_DELAY) == 1){
+        printf("HELLO from %s! Count %d\n", "orphaned_thread", ++(*(task_orphaned_args->counter)));
+        vTaskDelete(NULL);
+        xSemaphoreGive(task_orphaned_args->a_lock);
+    }
+    vTaskSuspend(NULL);
+}
+
+void task_unorphaned(void * params){
+    struct Args * task_orphaned_args = (struct Args *) params;
+    if (xSemaphoreTake(task_orphaned_args->a_lock, portMAX_DELAY) == 1){
+        printf("HELLO from %s! Count %d\n", "un-orphaned_thread", ++(*(task_orphaned_args->counter)));
+        xSemaphoreGive(task_orphaned_args->a_lock);
+       
+    }
+    vTaskSuspend(NULL);
+}
