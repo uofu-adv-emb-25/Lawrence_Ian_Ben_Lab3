@@ -34,7 +34,7 @@ void main_thread(void *params)
         cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, on);
         on = !on;
         vTaskDelay(100);
-        work(semaphore, "thread", &counter, portMAX_DELAY);
+        work(semaphore, "main", &counter, portMAX_DELAY);
     }
 }
 
