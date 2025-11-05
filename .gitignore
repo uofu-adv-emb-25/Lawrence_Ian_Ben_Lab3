@@ -1,0 +1,17 @@
+Testing
+build
+log
+
+*.log.*
+*-asciinema
+*.pid
+*-profile
+
+.vscode/
+**/build/
+CMakeLists.txt
+**/Makefile
+**/CTestTestfile.cmake
+**/cmake_install.cmake
+
+.venv
